@@ -1,4 +1,11 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  UseGuards,
+  CacheInterceptor,
+  UseInterceptors,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { ApiTags } from '@nestjs/swagger';
@@ -10,6 +17,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
+  @UseInterceptors(CacheInterceptor)
   @UseGuards(AuthGuard('local'))
   async login(@Body() authDto: AuthDto) {
     return await this.authService.login(authDto);

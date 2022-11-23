@@ -1,18 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { CACHE_MANAGER, Inject, Injectable } from '@nestjs/common';
 import { User } from '../user/entities/user.entity';
+import { UserService } from 'src/user/user.service';
 import { compareSync } from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AuthDto } from './dto/auth.dto';
-import { Movie } from 'src/movies/entities/movie.entity';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private readonly userService: UserService,
+    @Inject(CACHE_MANAGER)
+    private readonly cacheManager: Cache,
   ) {}
 
   async login(loginInfo: AuthDto) {
@@ -28,22 +29,23 @@ export class AuthService {
       userType: user.userType,
     };
 
+    const token = this.jwtService.sign(payload);
+
     return {
-      token: this.jwtService.sign(payload),
+      token,
     };
   }
 
   async validateUser(email: string, password: string) {
     let user: User;
-    try {
-      user = await this.userRepository.findOne({
-        where: {
-          email,
-        },
-        relations: ['movies'],
-      });
-    } catch (error) {
-      return null;
+    const userRedis: string = await this.cacheManager.get(`user-${email}`);
+
+    if (userRedis !== null && userRedis !== undefined) {
+      user = JSON.parse(userRedis);
+    } else {
+      user = await this.userService.getByEmail(email);
+
+      await this.cacheManager.set(`user-${email}`, JSON.stringify(user), 5);
     }
 
     const isPasswordValid = compareSync(password, user.password);

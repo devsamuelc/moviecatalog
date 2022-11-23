@@ -1,15 +1,14 @@
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { Movie } from './entities/movie.entity';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike } from 'typeorm';
 import { FindMovieDto } from './dto/find-movie.dto';
 
 @Injectable()
 export class MovieService {
   constructor(
-    @InjectRepository(Movie)
+    @Inject('MOVIE_REPOSITORY')
     private readonly movieRepository: Repository<Movie>,
   ) {}
 
