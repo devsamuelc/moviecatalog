@@ -3,7 +3,6 @@ import { User } from '../user/entities/user.entity';
 import { UserService } from 'src/user/user.service';
 import { compareSync } from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { Repository } from 'typeorm';
 import { AuthDto } from './dto/auth.dto';
 import { Cache } from 'cache-manager';
 

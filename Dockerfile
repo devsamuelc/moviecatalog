@@ -10,4 +10,6 @@ COPY . .
 
 RUN yarn build
 
+EXPOSE 3334
+
 CMD [ "node", "dist/main.js" ]

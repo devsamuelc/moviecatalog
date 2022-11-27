@@ -1,15 +1,18 @@
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, CACHE_MANAGER } from '@nestjs/common';
 import { Movie } from './entities/movie.entity';
 import { Repository, ILike } from 'typeorm';
 import { FindMovieDto } from './dto/find-movie.dto';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class MovieService {
   constructor(
     @Inject('MOVIE_REPOSITORY')
     private readonly movieRepository: Repository<Movie>,
+    @Inject(CACHE_MANAGER)
+    private readonly cacheManager: Cache,
   ) {}
 
   async create(user, createMovieDto: CreateMovieDto) {
@@ -71,12 +74,19 @@ export class MovieService {
   }
 
   async findOne(id: string) {
+    let movie: Movie;
+    const movieRedis: string = await this.cacheManager.get(`movie-${id}`)
+
     try {
-      const movie = await this.movieRepository.findOne({
-        where: {
-          id,
-        },
-      });
+      if(movieRedis !== null && movieRedis !== undefined) {
+        movie = JSON.parse(movieRedis);
+      } else {
+        movie = await this.movieRepository.findOne({
+                where: {
+                  id,
+                },
+              });
+      }
 
       return movie;
     } catch (error) {
